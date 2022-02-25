@@ -20,10 +20,11 @@ def reg_loss_(y, y_hat, theta, lambda_):
         This function should not raise any Exception.
     """
     try:
-        # Checking y and y_hat are numpy array
+        # Checking y is numpy array
         if (not isinstance(y, np.ndarray)) \
                 or (not isinstance(y_hat, np.ndarray)):
-            print("Numpy arrays are expected.", file=sys.stderr)
+            s = "Numpy arrays are expected."
+            print(s, file=sys.stderr)
             return None
 
         # Checking the shape of y and y_hat
@@ -34,10 +35,22 @@ def reg_loss_(y, y_hat, theta, lambda_):
                 + " or not the same number of lines."
             print(s, file=sys.stderr)
             return None
-        # Checking theta parameter
-        
-        loss = (y - y_hat).T @ (y - y_hat) / (2.0 * y.shape[0])
-        return float(loss)
+        # Checking theta dimension
+        if (not isinstance(theta, np.ndarray)) \
+                or (theta.ndim != 2):
+            s = "2-dimensional array is expected for theta parameter."
+            print(s, file=sys.stderr)
+            return None
+        # Checking lambda_  parameter
+        if not isinstance(lambda_, (int, float)):
+            s = "Numeric type is expected for lambda_ parameter."
+            print(s, file=sys.stderr)
+            return None
+
+        t_ = np.squeeze(theta[1:])
+        loss = (y - y_hat).T @ (y - y_hat)
+        reg = lambda_ * t_ @ t_
+        return float(0.5 * (loss + reg) / y.shape[0])
     except:
         None
 

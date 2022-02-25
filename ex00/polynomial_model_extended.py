@@ -1,4 +1,3 @@
-from os import X_OK
 import sys
 import numpy as np
 from numpy.polynomial.polynomial import polyvander
