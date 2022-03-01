@@ -130,7 +130,7 @@ if __name__ == '__main__':
                   [ 9, -11, 8]])
     y = np.array([[2], [14], [-13], [5], [12], [4], [-19]])
     theta = np.array([[7.01], [3], [10.5], [-6]])
-    
+
     print("# Example 1:")
     my_res = reg_linear_grad(y, x, theta, 1)
     expected_res = np.array([[-60.99],
@@ -138,7 +138,7 @@ if __name__ == '__main__':
                              [863.46571429],
                              [-644.52142857]])
     show_(my_res, expected_res)
-    
+
     print("\n# Example 2:")
     my_res = vec_reg_linear_grad(y, x, theta, 1)
     expected_res = np.array([[-60.99],
@@ -146,7 +146,7 @@ if __name__ == '__main__':
                              [863.46571429],
                              [-644.52142857]])
     show_(my_res, expected_res)
-    
+
     print("\n# Example 3:")
     my_res = reg_linear_grad(y, x, theta, 0.5)
     expected_res = np.array([[-60.99],
@@ -154,7 +154,7 @@ if __name__ == '__main__':
                              [862.71571429],
                              [-644.09285714]])
     show_(my_res, expected_res)
-    
+
     print("\n# Example 4:")
     my_res = vec_reg_linear_grad(y, x, theta, 0.5)
     expected_res = np.array([[-60.99 ],
@@ -162,7 +162,7 @@ if __name__ == '__main__':
                              [862.71571429],
                              [-644.09285714]])
     show_(my_res, expected_res)
-    
+
     print("\n# Example 5:")
     my_res = reg_linear_grad(y, x, theta, 0.0)
     expected_res = np.array([[-60.99],
@@ -170,7 +170,7 @@ if __name__ == '__main__':
                              [861.96571429],
                              [-643.66428571]])
     show_(my_res, expected_res)
-    
+
     print("\n# Example 6:")
     my_res = vec_reg_linear_grad(y, x, theta, 0.0)
     expected_res = np.array([[-60.99 ],
