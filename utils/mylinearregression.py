@@ -97,27 +97,30 @@ class MyLinearRegression(Metrics):
             or (not isinstance(alpha, (int, float))) \
                 or (not isinstance(max_iter, int)):
             s = "At least one of the parameters is not of expected type."
-            raise TypeError(s)
+            print(s, file=sys.stderr)
+            sys.exit()
 
         # Conversion of thetas and testing the shape of the parameters.
         thetas = self._convert_thetas_(thetas)
         if (thetas.ndim != 2):
             s = "Unexpected number of dimension for thetas. Must be 2."
             print(s, file=sys.stderr)
-            sys,exit()
+            sys.exit()
         if (thetas.shape[1] != 1):
             s = "Unexpected shape for thetas. It must be n * 1 shape."
             print(s, file=sys.stderr)
-            sys,exit()
+            sys.exit()
         # Checking data type, 'i': signed integer, 'u': unsigned integer,
         # 'f': float
         if thetas.dtype.kind not in ["i", "u", "f"]:
             s = "Unexpected data type for theta."
             print(s, file=sys.stderr)
-            return None
+            sys.exit()
         # Checking the value of the learning rate
         if (alpha >= 1) or (alpha <= 0) or (max_iter <= 0):
-            return None
+            s = "Incorrect value for alpha or/and max_iter."
+            print(s, file=sys.stderr)
+            sys.exit()
         # Casting self.theta to float, in case it is integer
         self.thetas = thetas.astype('float64')
         self.alpha = float(alpha)
@@ -255,7 +258,9 @@ class MyLinearRegression(Metrics):
             res = (self.predict_(x) - y) ** 2
             return res
         except:
-            None
+            # If something unexpected happened, we juste leave
+            print("Something wrong during loss_elem_.", file=sys.stderr)
+            return None
 
     def loss_(self, x, y):
         """Computes the half mean squared error of two non-empty numpy.array,
@@ -287,23 +292,23 @@ class MyLinearRegression(Metrics):
             loss = (self.predict_(x) - y).T @ (self.predict_(x) - y)
             return float(loss) / (2.0 * y.shape[0])
         except:
-            None
+            # If something unexpected happened, we juste leave
+            print("Something wrong during loss_.", file=sys.stderr)
+            return None
 
     @staticmethod
     def _loss_elem_(y, y_hat):
-        """
-        Description:
-        Calculates all the elements (y_pred - y)^2 of the loss function.
+        """Calculates all the elements (y_pred - y)^2 of the loss function.
         Args:
-        y: has to be an numpy.array, a vector.
-        y_hat: has to be an numpy.array, a vector.
+            y: has to be an numpy.array, a vector.
+            y_hat: has to be an numpy.array, a vector.
         Returns:
-        J_elem: numpy.array, a vector of dimension
+            J_elem: numpy.array, a vector of dimension
                 (number of the training examples,1).
-        None if there is a dimension matching problem between y and y_hat.
-        None if y or y_hat is not of the expected type.
+            None if there is a dimension matching problem between y and y_hat.
+            None if y or y_hat is not of the expected type.
         Raises:
-        This function should not raise any Exception.
+            This function should not raise any Exception.
         """
         try:
             # Checking y and y_hat are numpy array
@@ -373,6 +378,8 @@ class MyLinearRegression(Metrics):
             return ypred
         except:
             # If something unexpected happened, we juste leave
+            # If something unexpected happened, we juste leave
+            print("Something wrong during predict_.", file=sys.stderr)
             return None
 
 
