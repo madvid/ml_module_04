@@ -7,17 +7,29 @@ sys.path.insert(1, path)
 from mylinearregression import MyLinearRegression
 
 
+# ########################################################################### #
+#                                Constants                                    #
+# ########################################################################### #
+dct_attr = {'thetas': (np.ndarray),
+            'alpha': (float),
+            'max_iter': (int),
+            'lambda_': (float)}
+
+
+# ########################################################################### #
+#                                Functions                                    #
+# ########################################################################### #
 def check_types(f):
     """
     """
     def inner(*args):
-        ag1, ag2 = dir()
+        _, ag1, ag2 = args
         if (not isinstance(ag1, np.ndarray)) \
                 or (not isinstance(ag2, np.ndarray)):
             s = "Numpy arrays are expected."
             print(s, file=sys.stderr)
             sys.exit()
-        f(*args)
+        return f(*args)
     return inner
 
 def check_measurement(arg1, arg2):
@@ -38,8 +50,8 @@ def check_measurement(arg1, arg2):
                 if (arr_1.shape[0] != arr_2.shape[0]) \
                         or (arr_2.shape[1] != 1) \
                         or (myridge.thetas.shape[0] != arr_1.shape[1] + 1):
-                    s = "Mismatch shapes: x must be m * n and y (m * 1)." \
-                        + "Plus, (n + 1) should be equal the number " \
+                    s = "Mismatch shapes: x must be (m * n) and y (m * 1)." \
+                        + " Plus, (n + 1) should be equal the number " \
                         + "components of thetas in MyRidge instance."
                     print(s, file=sys.stderr)
                     sys.exit()
@@ -50,9 +62,9 @@ def check_measurement(arg1, arg2):
                         + "dimensional, or not the same number of lines."
                     print(s, file=sys.stderr)
                     sys.exit()
-            f(*args)
+            
+            return f(*args)
         return dim_shape
-
     return decorator_check_measurement
 
 
@@ -75,19 +87,37 @@ class MyRidge(MyLinearRegression):
 
 
     def get_params_(self):
-        """ Gets the attributes
+        """ Gets the attributes of the estimator.
+        No particular output is expected in the subject, thus one might use
+        __dict__.
+        Args:
+            No argument except the instance itself.
+        Return:
+            [dict]: dictionary containing all the attributes.
         """
-        return dir(self)
-        # return self.__getattribute__('thetas'), \
-        #        self.__getattribute__('alpha'), \
-        #        self.__getattribute__('max_iter'), \
-        #        self.__getattribute__('lambda_')
+        return self.__dict__
 
 
-    def set_params_(self):
+    def set_params_(self, new_val):
+        """ Set new values to attributes.
+        Args:
+            new_val [dict]: new values for the attributes precised as keys.
+        Return:
+            None
         """
-        """
-        pass
+        try:
+            for key, val in new_val.items():
+                if key in ('thetas', 'max_iter', 'alpha', 'lambda_'):
+                    if not isinstance(val, dct_attr[key]):
+                        s = 'thetas, max_iter, alpha and lambda_ parameters are' \
+                            + 'expected to be a specific type.'
+                        print(s, file=sys.stderr)
+                        return None
+                setattr(self, key, val)
+        except:
+            s = "Something went wrong when using set_params."
+            print(s, file=sys.stderr)
+            return None
 
 
     def l2(self):
@@ -104,6 +134,7 @@ class MyRidge(MyLinearRegression):
         """
         l2 = np.dot(self.thetas[1:].T, self.thetas[1:])
         return np.squeeze(l2.astype(float))
+
 
     @check_types
     @check_measurement('y', 'y')
@@ -126,7 +157,7 @@ class MyRidge(MyLinearRegression):
         """
         try:
             loss = (y - y_hat).T @ (y - y_hat)
-            reg = self.lambda_ * self.l2
+            reg = self.lambda_ * self.l2()
             return float(0.5 * (loss + reg) / y.shape[0])
         except:
             None
@@ -152,24 +183,13 @@ class MyRidge(MyLinearRegression):
         """
         try:
             loss = (y - y_hat) ** 2
-            reg = self.lambda_ * self.l2
-            return float(0.5 * (loss + reg) / y.shape[0])
+            reg = self.lambda_ * self.l2()
+            return 0.5 * (loss + reg) / y.shape[0]
         except:
             # If something unexpected happened, we juste leave
             print("Something wrong during loss_elem.", file=sys.stderr)
             return None
 
-    # @check_types
-    # @check_measurement('x', 'y')
-    # def predict_(self, x, y):
-    #     """
-    #     """
-    #     try:
-    #         x_ = np.c_(np.ones(x.shape[0]), x)
-    #         pred = np.dot(x_, self.thetas)
-    #         return pred
-    #     except:
-    #         return None
 
     @check_types
     @check_measurement('x', 'y')
@@ -236,6 +256,8 @@ class MyRidge(MyLinearRegression):
             return None
 
 
-
+# ########################################################################### #
+#                                    Main                                     #
+# ########################################################################### #
 if __name__ == "__main__":
     pass
