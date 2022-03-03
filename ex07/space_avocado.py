@@ -4,19 +4,15 @@ import pickle
 import sys
 import os
 import matplotlib.pyplot as plt
+from benchmark_train import data_idx
 # mpl.use('QtAgg')
 
-path = os.path.join(os.path.dirname(__file__), '..', 'ex05')
-sys.path.insert(1, path)
-from mylinearregression import MyLinearRegression as MyLR
 
 path = os.path.join(os.path.dirname(__file__), '..', 'utils')
 sys.path.insert(1, path)
 from scaler import MyStandardScaler
-
-path = os.path.join(os.path.dirname(__file__), '..', 'ex09')
-sys.path.insert(1, path)
 from data_spliter import data_spliter
+from ridge_v2 import MyRidge
 
 # ######################################################### #
 #                        CONSTANTES                         #
@@ -103,6 +99,7 @@ if __name__ == "__main__":
     lst_keys = ['thetas',
                 'alpha',
                 'max_iter',
+                'lambda_',
                 '_tag_',
                 '_idx_',
                 '_vars_',
@@ -120,15 +117,26 @@ if __name__ == "__main__":
     # Plotting losses vs model tags.
     # ##################################################### #
     tags, losses = retrieve_tags_losses(data_models)
-    _, axe = plt.subplots(1, 1, figsize=(15, 8))
-    plt.scatter(tags, losses)
-    axe.set_xlabel("models")
-    axe.set_ylabel("MSE")
+    fig, axes = plt.subplots(2, 1, figsize=(25, 14))
+    
+    half = len(tags) // 2
+    axes[0].scatter(tags[:half], losses[:half])
+    axes[1].scatter(tags[half:], losses[half:])
+    fig.tight_layout(pad=14.0)
+    axes[0].set_xlabel("models")
+    axes[0].set_ylabel("MSE")
+    axes[1].set_xlabel("models")
+    axes[1].set_ylabel("MSE")
+    axes[0].set_ylim([0, 0.9])
+    axes[1].set_ylim([0, 0.5])
+    axes[0].grid()
+    axes[1].grid()
+
     plt.title("MSE vs explored models")
-    plt.xticks(rotation=90)
-    plt.grid()
-    plt.subplots_adjust(bottom=0.22)
-    plt.show()
+    plt.setp(axes[0].get_xticklabels(), rotation=90)
+    plt.setp(axes[1].get_xticklabels(), rotation=90)
+    #plt.subplots_adjust(bottom=0.22)
+    plt.show()   
 
     # ##################################################### #
     # Getting the best model and training a new one identical
@@ -136,13 +144,17 @@ if __name__ == "__main__":
     # ##################################################### #
     dct_target = find_lowest_loss(data_models)
 
-    model_base = MyLR(dct_target['thetas'])
-    model_base._tag_ = dct_target['_tag_']
-    model_base._vars_ = dct_target['_vars_']
-    print(f" vars = {model_base._vars_}-- tag = {model_base._tag_}")
+    model_base = MyRidge(dct_target['thetas'])
+    model_base.set_params_(dct_target)
+    # model_base._tag_ = dct_target['_tag_']
+    # model_base._vars_ = dct_target['_vars_']
+    print(f"{model_base._vars_ = }",
+          f"-- {model_base._tag_ = }",
+          f"-- {model_base.alpha = }",
+          f"-- {model_base.lambda_ = }")
 
     m = model_base.thetas.shape
-    model = MyLR(np.random.rand(*m), alpha=1e-2, max_iter=1000000)
+    model = MyRidge(np.random.rand(*m), alpha=1e-2, max_iter=100000)
 
     # ##################################################### #
     # Preparing the data: generating the polynomial features
@@ -167,16 +179,15 @@ if __name__ == "__main__":
     Xtr = scaler_x.transform(data[cols].values)
     Ytr = scaler_y.transform(data['target'].values)
 
-    model.fit_(x_train_tr, y_train_tr)
-    pred_trained = model.predict_(Xtr)
-
+    model.fit_(x_train_tr[:, data_idx(dct_target['_vars_'])], y_train_tr)
+    pred_trained = model.predict_(Xtr[:, data_idx(dct_target['_vars_'])])
     # ##################################################### #
     # Plotting the resuts (base model from the exploration
     # + the retrained model)
     # ##################################################### #
-    mse_trained = model._loss_(model.predict_(x_test_tr), y_test_tr)
+    mse_trained = model._loss_(model.predict_(x_test_tr[:, data_idx(dct_target['_vars_'])]), y_test_tr)
 
-    fig, axes = plt.subplots(1, 3, figsize=(15, 8))
+    fig, axes = plt.subplots(1, 3, figsize=(25, 8))
     # 'weight' aka w is located at col 0
     # 'prod_distance' aka p is located at col 1
     # 'time_deivery' aka t is located at col 2

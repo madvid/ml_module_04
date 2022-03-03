@@ -77,7 +77,7 @@ col2idx = {'w': 0,
            'pt2': 22,
            'p2t2': 23}
 
-nb_steps = 50
+nb_steps = 1000000
 
 # ######################################################### #
 #                  FUNCTION DEFINITIONS                     #
@@ -211,7 +211,8 @@ if __name__ == "__main__":
                       end='\r',
                       flush=True)
             
-                model._tag_, model._idx_ = f"batch_1_model_{ii + 1}_reg_{2 * jj:0>#2d}", count
+                # model._tag_, model._idx_ = f"batch_1_model_{ii + 1}_reg_{2 * jj:0>#2d}", count
+                model._tag_, model._idx_ = f"b1_mdl{ii + 1}_reg{2 * jj:0>#2d}", count
                 model._vars_ = vars
                 batch1_future.append(executor.submit(model.fit_,
                                     x_train_tr[:, data_idx(vars)],
@@ -294,7 +295,8 @@ if __name__ == "__main__":
                 print(f"Batch intermediate: starting model {count + 1} / {nb}",
                     end='\r',
                     flush=True)
-                model._tag_, model._idx_ = f"batch_2_model_{ii + 1}_reg_{2 * jj:0>#2d}", count
+                # model._tag_, model._idx_ = f"batch_2_model_{ii + 1}_reg_{2 * jj:0>#2d}", count
+                model._tag_, model._idx_ = f"b2_mdl{ii + 1}_reg{2 * jj:0>#2d}", count
                 model._vars_ = vars
                 batch2_future.append(executor.submit(model.fit_,
                                                     x_train_tr[:, data_idx(vars)],
@@ -406,7 +408,7 @@ if __name__ == "__main__":
                 print(f"Batch 'complex': starting model {count + 1} / {nb}",
                     end='\r',
                     flush=True)
-                model._tag_, model._idx_ = f"batch_3_model_{ii + 1}_reg_{2 * jj:0>#2d}", count
+                model._tag_, model._idx_ = f"b3_mdl{ii + 1}_reg{2 * jj:0>#2d}", count
                 model._vars_ = vars
                 batch3_future.append(executor.submit(model.fit_,
                                                     x_train_tr[:, data_idx(vars)],
@@ -434,6 +436,8 @@ if __name__ == "__main__":
             min = loss
             min_loss_model = model
         model._loss_ = loss
+    print(f"model with the lowest loss: {min_loss_model._tag_}({min})")
+
     dcts_models = {}
     for model in batch1_trained + batch2_trained + batch3_trained:
         dcts_models[model._tag_] = model.__dict__
@@ -451,13 +455,17 @@ if __name__ == "__main__":
     axes[0].scatter(lst_tags[:half], lst_loss[:half])
     axes[1].scatter(lst_tags[half:], lst_loss[half:])
     
-    fig.tight_layout(pad=16.0)
+    fig.tight_layout(pad=14.0)
     axes[0].set_xlabel("models")
     axes[0].set_ylabel("MSE")
     axes[1].set_xlabel("models")
     axes[1].set_ylabel("MSE")
-    axes[0].tick_params(axis='x', rotation=75, labelsize=8)
-    axes[1].tick_params(axis='x', rotation=75, labelsize=8)
+    
+    plt.setp(axes[0].get_xticklabels(), rotation=90)
+    plt.setp(axes[1].get_xticklabels(), rotation=90)
+
+    axes[0].set_ylim([0, 0.9])
+    axes[1].set_ylim([0, 0.5])
     axes[0].grid()
     axes[1].grid()
     #plt.subplots_adjust(bottom=0.22)
