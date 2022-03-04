@@ -13,47 +13,6 @@ dct_attr = {'theta': (np.ndarray),
             'penality': (str),
             'lambda_': (float)}
 
-# ########################################################################### #
-#                                Functions                                    #
-# ########################################################################### #
-def regularization_grad(f):
-    def l2_reg(*args):
-        mylr, _, _ = args
-        if mylr.penality == 'l2':
-            theta_ = mylr.theta.copy()
-            theta_[0] = 0
-            reg = mylr.lambda_ * theta_
-            grad = f(*args) + reg
-        else:
-            grad = f(*args)
-        return  grad
-    return l2_reg
-
-def regularization_loss_e(f):
-    def l2_reg_e(*args):
-        mylr, _, _ = args
-        if mylr.penality == 'l2':
-            theta_ = mylr.theta.copy()
-            theta_[0] = 0
-            reg = mylr.lambda_ * theta_ ** 2
-            loss_e = f(*args) + reg
-        else:
-            loss_e = f(*args)
-        return  loss_e
-    return l2_reg_e
-
-def regularization_loss(f):
-    def l2_reg(*args):
-        mylr, y, _ = args
-        if mylr.penality == 'l2':
-            theta_ = mylr.theta.copy()
-            reg = 0.5 * theta_[1:].T * theta_[1:] / y.shape[0]
-            loss = f(*args) + reg
-        else:
-            loss = f(*args)
-        return  loss
-    return l2_reg
-
 
 # ########################################################################### #
 #                                  Class                                      #
@@ -84,7 +43,7 @@ class MyLogisticRegression():
         self.max_iter = max_iter
         self.penality = penality
         if penality == 'l2':
-            self.lambda_ = 1.0
+            self.lambda_ = lambda_
         else:
             self.lambda_ = 0.0
 
@@ -139,19 +98,19 @@ class MyLogisticRegression():
         Return:
             None
         """
-        try:
-            for key, val in new_val.items():
-                if key in ('thetas', 'max_iter', 'alpha', 'lambda_'):
-                    if not isinstance(val, dct_attr[key]):
-                        s = 'theta, max_iter, alpha and lambda_ parameters are' \
-                            + 'expected to be of a specific type.'
-                        print(s, file=sys.stderr)
-                        return None
-                setattr(self, key, val)
-        except:
-            s = "Something went wrong when using set_params."
-            print(s, file=sys.stderr)
-            return None
+        # try:
+        for key, val in new_val.items():
+            if key in ('theta', 'max_iter', 'alpha', 'lambda_'):
+                if not isinstance(val, dct_attr[key]):
+                    s = 'theta, max_iter, alpha and lambda_ parameters are' \
+                        + 'expected to be of a specific type.'
+                    print(s, file=sys.stderr)
+                    return None
+            setattr(self, key, val)
+        # except:
+        #     s = "Something went wrong when using set_params."
+        #     print(s, file=sys.stderr)
+        #     return None
 
 
     def predict_(self, x):
@@ -186,7 +145,6 @@ class MyLogisticRegression():
         except:
             return None
 
-    @regularization_grad
     def _gradient_(self, x, y):
         """ Private function gradient, there is no test performed on the
         parameters. It is to avoid to perform useless same tests at every
@@ -198,10 +156,13 @@ class MyLogisticRegression():
             The gradient as a numpy.array, a vector of shape n * 1,
         """
         xp = np.hstack((np.ones((x.shape[0], 1)), x))
-        return xp.T @ (self._sigmoid_(xp @ self.theta) - y) / x.shape[0]
+        grad = xp.T @ (self._sigmoid_(xp @ self.theta) - y) / x.shape[0]
+        theta_ = self.theta.copy()
+        theta_[0] = 0
+        reg = self.lambda_ * theta_ / x.shape[0]
+        return grad + reg
 
 
-    @regularization_grad
     def gradient(self, x, y):
         """Computes a gradient vector from three non-empty numpy.array,
         without any for-loop. The three arrays must have compatible shapes.
@@ -258,35 +219,34 @@ class MyLogisticRegression():
         Raises:
             This function should not raise any Exception.
         """
-        try:
-            # Checking x, y and theta are numpy array
-            if (not isinstance(x, np.ndarray)) \
-                or (not isinstance(y, np.ndarray)):
-                s = "Unexpected type for one of the array."
-                print(s, file=sys.stderr)
-                return None
-
-            # Checking the shape of x and y
-            if (y.ndim != 2) or (x.ndim != 2) \
-                    or (y.shape[1] != 1) \
-                    or (y.shape[0] != x.shape[0]) \
-                    or (self.theta.shape != (x.shape[1] + 1, 1)):
-                s = "Unexpected dimension for at least one of the arrays" \
-                + " or mismatching shape between arrays"
-                print(s, file=sys.stderr)
-                return None
-            
-            # Performing the gradient descent
-            for _ in range(self.max_iter):
-                grad = self._gradient_(x, y)
-                self.theta = self.theta - self.alpha * grad
-            return self
-        except:
-            # If something unexpected happened, we juste leave
-            print("Something wrong during fit.", file=sys.stderr)
+        # try:
+        # Checking x, y and theta are numpy array
+        if (not isinstance(x, np.ndarray)) \
+            or (not isinstance(y, np.ndarray)):
+            s = "Unexpected type for one of the array."
+            print(s, file=sys.stderr)
             return None
 
-    @regularization_loss_e
+        # Checking the shape of x and y
+        if (y.ndim != 2) or (x.ndim != 2) \
+                or (y.shape[1] != 1) \
+                or (y.shape[0] != x.shape[0]) \
+                or (self.theta.shape != (x.shape[1] + 1, 1)):
+            s = "Unexpected dimension for at least one of the arrays" \
+            + " or mismatching shape between arrays"
+            print(s, file=sys.stderr)
+            return None
+        
+        # Performing the gradient descent
+        for ii in range(self.max_iter):
+            grad = self._gradient_(x, y)
+            self.theta = self.theta - self.alpha * grad
+        return self
+        # except:
+        #     # If something unexpected happened, we juste leave
+        #     print("Something wrong during fit.", file=sys.stderr)
+        #     return None
+
     def loss_elem_(self, x, y):
         """
         Computes the logistic loss vector.
@@ -322,7 +282,7 @@ class MyLogisticRegression():
         # except:
         #     return None
 
-    regularization_loss
+
     def loss_(self, x, y):
         """Computes the logistic loss value.
         Args:
@@ -353,14 +313,13 @@ class MyLogisticRegression():
             return None
 
         y_hat = self.predict_(x)
-        log_loss = MyLogisticRegression._loss_(y, y_hat)
+        log_loss = self._loss_(y, y_hat)
         return log_loss
         # except:
         #     return None
 
 
-    @staticmethod
-    def _loss_elem_(y, y_hat):
+    def _loss_elem_(self, y, y_hat):
         """Computes the logistic loss vector.
         Args:
             y: has to be an numpy.array, a vector of shape m * 1.
@@ -374,13 +333,15 @@ class MyLogisticRegression():
         # try:
         eps = 1e-15
         log_loss = -(y * np.log(y_hat + eps) + (1 - y) * np.log(1 - y_hat + eps))
-        return log_loss
+        theta_ = self.theta.copy()
+        theta_[0] = 0
+        reg = self.lambda_ * np.dot(theta_.T, theta_)
+        return log_loss + 0.5 * reg
         # except:
         #     return None
 
 
-    @staticmethod
-    def _loss_(y, y_hat):
+    def _loss_(self, y, y_hat):
         """Private method to compute the logistic loss value.
         Args:
             y: has to be an numpy.array, a vector.
@@ -402,7 +363,7 @@ class MyLogisticRegression():
             or (y_hat.shape[1] != 1) \
                 or (y_hat.shape[0] != y.shape[0]):
             return None
-        log_loss = MyLogisticRegression._loss_elem_(y, y_hat)
+        log_loss = self._loss_elem_(y, y_hat)
         return np.mean(log_loss)
         # except:
         #     # If something unexpected happened, we juste leave
