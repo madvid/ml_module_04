@@ -64,7 +64,7 @@ class MyLogisticRegression():
     My personnal logistic regression to classify things.
     """
 
-    def __init__(self, theta, alpha=0.001, max_iter=1000, penality='l2'):
+    def __init__(self, theta, alpha=0.001, max_iter=1000, penality='l2', lambda_=1.0):
         # Checking of the attributes:
         if (not isinstance(theta, (np.ndarray, tuple, list))) \
                 or (not isinstance(alpha, (int, float))) \
