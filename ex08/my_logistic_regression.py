@@ -22,7 +22,6 @@ class MyLogisticRegression():
     Description:
     My personnal logistic regression to classify things.
     """
-
     def __init__(self, theta, alpha=0.001, max_iter=1000, penality='l2', lambda_=1.0):
         # Checking of the attributes:
         if (not isinstance(theta, (np.ndarray, tuple, list))) \
@@ -30,12 +29,30 @@ class MyLogisticRegression():
                 or (not isinstance(max_iter, int)) \
                 or (penality not in ['l2', None]):
             s = "At least one of the parameters is not of expected type."
-            raise TypeError(s)
+            print(s, file=sys.stderr)
+            return None
 
         # Conversion of thetas and testing the shape of the parameters.
         theta = self._convert_thetas_(theta)
+        if (theta.ndim != 2):
+            s = "Unexpected number of dimension for thetas. Must be 2."
+            print(s, file=sys.stderr)
+            sys.exit()
+        if (theta.shape[1] != 1):
+            s = "Unexpected shape for thetas. It must be n * 1 shape."
+            print(s, file=sys.stderr)
+            sys.exit()
+        # Checking data type, 'i': signed integer, 'u': unsigned integer,
+        # 'f': float
+        if theta.dtype.kind not in ["i", "u", "f"]:
+            s = "Unexpected data type for theta."
+            print(s, file=sys.stderr)
+            sys.exit()
+
         if (alpha >= 1) or (alpha <= 0) or (max_iter <= 0):
-            return None
+            s = "Incorrect value for alpha or/and max_iter."
+            print(s, file=sys.stderr)
+            sys.exit()
         
         # Casting self.theta to float, in case it is integer
         self.theta = theta.astype('float64')
@@ -219,33 +236,33 @@ class MyLogisticRegression():
         Raises:
             This function should not raise any Exception.
         """
-        # try:
-        # Checking x, y and theta are numpy array
-        if (not isinstance(x, np.ndarray)) \
-            or (not isinstance(y, np.ndarray)):
-            s = "Unexpected type for one of the array."
-            print(s, file=sys.stderr)
-            return None
+        try:
+            # Checking x, y and theta are numpy array
+            if (not isinstance(x, np.ndarray)) \
+                or (not isinstance(y, np.ndarray)):
+                s = "Unexpected type for one of the array."
+                print(s, file=sys.stderr)
+                return None
 
-        # Checking the shape of x and y
-        if (y.ndim != 2) or (x.ndim != 2) \
-                or (y.shape[1] != 1) \
-                or (y.shape[0] != x.shape[0]) \
-                or (self.theta.shape != (x.shape[1] + 1, 1)):
-            s = "Unexpected dimension for at least one of the arrays" \
-            + " or mismatching shape between arrays"
-            print(s, file=sys.stderr)
+            # Checking the shape of x and y
+            if (y.ndim != 2) or (x.ndim != 2) \
+                    or (y.shape[1] != 1) \
+                    or (y.shape[0] != x.shape[0]) \
+                    or (self.theta.shape != (x.shape[1] + 1, 1)):
+                s = "Unexpected dimension for at least one of the arrays" \
+                + " or mismatching shape between arrays"
+                print(s, file=sys.stderr)
+                return None
+            
+            # Performing the gradient descent
+            for ii in range(self.max_iter):
+                grad = self._gradient_(x, y)
+                self.theta = self.theta - self.alpha * grad
+            return self
+        except:
+            # If something unexpected happened, we juste leave
+            print("Something wrong during fit.", file=sys.stderr)
             return None
-        
-        # Performing the gradient descent
-        for ii in range(self.max_iter):
-            grad = self._gradient_(x, y)
-            self.theta = self.theta - self.alpha * grad
-        return self
-        # except:
-        #     # If something unexpected happened, we juste leave
-        #     print("Something wrong during fit.", file=sys.stderr)
-        #     return None
 
     def loss_elem_(self, x, y):
         """
@@ -259,28 +276,28 @@ class MyLogisticRegression():
         Raises:
             This function should not raise any Exception.
         """
-        # try:
-        # Checking x and y are numpy array
-        if (not isinstance(x, np.ndarray)) \
-                or (not isinstance(y, np.ndarray)):
-            return None
+        try:
+            # Checking x and y are numpy array
+            if (not isinstance(x, np.ndarray)) \
+                    or (not isinstance(y, np.ndarray)):
+                return None
 
-        # Checking the shape of x and y
-        if (y.ndim != 2) or (x.ndim != 2) \
-                or (y.shape[1] != 1) \
-                or (y.shape[0] != x.shape[0]) \
-                or (self.theta.shape != (x.shape[1] + 1, 1)):
-            s = "Unexpected dimension for at least one of the arrays" \
-            + " or mismatching shape between arrays"
-            print(s, file=sys.stderr)
-            return None
+            # Checking the shape of x and y
+            if (y.ndim != 2) or (x.ndim != 2) \
+                    or (y.shape[1] != 1) \
+                    or (y.shape[0] != x.shape[0]) \
+                    or (self.theta.shape != (x.shape[1] + 1, 1)):
+                s = "Unexpected dimension for at least one of the arrays" \
+                + " or mismatching shape between arrays"
+                print(s, file=sys.stderr)
+                return None
 
-        y_hat = self.predict_(x)
-        #log_loss = y * np.log(yhat + eps) + (1 - y) * np.log(1 - yhat + eps)
-        log_loss = self._loss_elem_(y, y_hat)
-        return log_loss
-        # except:
-        #     return None
+            y_hat = self.predict_(x)
+            #log_loss = y * np.log(yhat + eps) + (1 - y) * np.log(1 - yhat + eps)
+            log_loss = self._loss_elem_(y, y_hat)
+            return log_loss
+        except:
+            return None
 
 
     def loss_(self, x, y):
@@ -296,27 +313,27 @@ class MyLogisticRegression():
         Raises:
             This function should not raise any Exception.
         """
-        # try:
-        # Checking y and y_hat are numpy array
-        if (not isinstance(x, np.ndarray)) \
-                or (not isinstance(y, np.ndarray)):
-            return None
-        
-        # Checking the shape of x and y
-        if (y.ndim != 2) or (x.ndim != 2) \
-                or (y.shape[1] != 1) \
-                or (y.shape[0] != x.shape[0]) \
-                or (self.theta.shape != (x.shape[1] + 1, 1)):
-            s = "Unexpected dimension for at least one of the arrays" \
-            + " or mismatching shape between arrays"
-            print(s, file=sys.stderr)
-            return None
+        try:
+            # Checking y and y_hat are numpy array
+            if (not isinstance(x, np.ndarray)) \
+                    or (not isinstance(y, np.ndarray)):
+                return None
+            
+            # Checking the shape of x and y
+            if (y.ndim != 2) or (x.ndim != 2) \
+                    or (y.shape[1] != 1) \
+                    or (y.shape[0] != x.shape[0]) \
+                    or (self.theta.shape != (x.shape[1] + 1, 1)):
+                s = "Unexpected dimension for at least one of the arrays" \
+                + " or mismatching shape between arrays"
+                print(s, file=sys.stderr)
+                return None
 
-        y_hat = self.predict_(x)
-        log_loss = self._loss_(y, y_hat)
-        return log_loss
-        # except:
-        #     return None
+            y_hat = self.predict_(x)
+            log_loss = self._loss_(y, y_hat)
+            return log_loss
+        except:
+            return None
 
 
     def _loss_elem_(self, y, y_hat):
@@ -330,15 +347,15 @@ class MyLogisticRegression():
         Raises:
             This function should not raise any Exception.
         """
-        # try:
-        eps = 1e-15
-        log_loss = -(y * np.log(y_hat + eps) + (1 - y) * np.log(1 - y_hat + eps))
-        theta_ = self.theta.copy()
-        theta_[0] = 0
-        reg = self.lambda_ * np.dot(theta_.T, theta_)
-        return log_loss + 0.5 * reg
-        # except:
-        #     return None
+        try:
+            eps = 1e-15
+            log_loss = -(y * np.log(y_hat + eps) + (1 - y) * np.log(1 - y_hat + eps))
+            theta_ = self.theta.copy()
+            theta_[0] = 0
+            reg = self.lambda_ * np.dot(theta_.T, theta_)
+            return log_loss + 0.5 * reg
+        except:
+            return None
 
 
     def _loss_(self, y, y_hat):
@@ -352,22 +369,22 @@ class MyLogisticRegression():
         Raises:
             This function should not raise any Exception.
         """
-        # try:
-        # Checking y and y_hat are numpy array
-        if (not isinstance(y, np.ndarray)) \
-                or (not isinstance(y_hat, np.ndarray)):
-            return None
+        try:
+            # Checking y and y_hat are numpy array
+            if (not isinstance(y, np.ndarray)) \
+                    or (not isinstance(y_hat, np.ndarray)):
+                return None
 
-        # Checking the shape of y and y_hat
-        if (y.shape[1] != 1) \
-            or (y_hat.shape[1] != 1) \
-                or (y_hat.shape[0] != y.shape[0]):
+            # Checking the shape of y and y_hat
+            if (y.shape[1] != 1) \
+                or (y_hat.shape[1] != 1) \
+                    or (y_hat.shape[0] != y.shape[0]):
+                return None
+            log_loss = self._loss_elem_(y, y_hat)
+            return np.mean(log_loss)
+        except:
+            # If something unexpected happened, we juste leave
             return None
-        log_loss = self._loss_elem_(y, y_hat)
-        return np.mean(log_loss)
-        # except:
-        #     # If something unexpected happened, we juste leave
-        #     return None
 
 
 # ########################################################################### #

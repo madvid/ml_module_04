@@ -27,6 +27,19 @@ lst_dataset = lst_check_feat + ["target"]
 file_x = 'solar_system_census.csv'
 file_y = 'solar_system_census_planets.csv'
 
+dct1_keys = ['regularization 00',
+                'regularization 02',
+                'regularization 04',
+                'regularization 06',
+                'regularization 08',
+                'regularization 10']
+dct2_keys = ['Venus', 'Mars', 'Earth', 'AstroBelt', 'f1_score']
+dct1_vals = {'Venus': MyLogR,
+                'Mars': MyLogR,
+                'Earth': MyLogR,
+                'AstroBelt': MyLogR,
+                'f1_score': float}
+
 # ######################################################### #
 #                  FUNCTION DEFINITIONS                     #
 # ######################################################### #
@@ -40,7 +53,7 @@ def find_best_f1(data_models: dict) -> dict:
     return dct_target
 
 
-def retrieve_tags_losses(data_models: dict):
+def retrieve_tags_f1(data_models: dict):
     lst_tags = []
     lst_f1 = []
     for k, dct_val in data_models.items():
@@ -175,19 +188,6 @@ if __name__ == "__main__":
         sys.exit()
 
     # Testing the keys wihin the models.
-    dct1_keys = ['regularization 00',
-                 'regularization 02',
-                 'regularization 04',
-                 'regularization 06',
-                 'regularization 08',
-                 'regularization 10']
-    dct2_keys = ['Venus', 'Mars', 'Earth', 'AstroBelt', 'f1_score']
-    dct1_vals = {'Venus': MyLogR,
-                 'Mars': MyLogR,
-                 'Earth': MyLogR,
-                 'AstroBelt': MyLogR,
-                 'f1_score': float}
-
     try:
         for key, dct_vals in data_models.items():
             if key not in dct1_keys:
@@ -210,16 +210,15 @@ if __name__ == "__main__":
         print(s, file=sys.stderr)
         sys.exit()
     
-    # ##################################################### #
-    # Plotting losses vs model tags.
-    # ##################################################### #
-    tags, f1_scores = retrieve_tags_losses(data_models)
+    # ################################################################# #
+    # Displaying the calculated f1 score (during benchmark) vs model tags.
+    # ################################################################# #
+    tags, f1_scores = retrieve_tags_f1(data_models)
     print(' ' * 6 + "Models" + ' '* 5 + '| f1')
     for tag, f1 in zip(tags, f1_scores):
         print(f"{tag}:", f1)
     _, axe = plt.subplots(1, 1, figsize=(15, 8))
     sns.barplot(x=tags, y=f1_scores, ax=axe)
-    #plt.scatter(tags, f1_scores)
     axe.set_xlabel("models")
     axe.set_ylabel("F1 score")
     plt.title("F1 vs explored One-vs-All")
@@ -228,13 +227,12 @@ if __name__ == "__main__":
     plt.subplots_adjust(bottom=0.22)
     plt.show()
 
-    # ##################################################### #
+    # ############################################################## #
     # Getting the best model and training a new one from scratch
     # Plus ...
-    # ##################################################### #
+    # ############################################################## #
     dct_target = find_best_f1(data_models)
 
-    # Constr
     m = dct_target['Earth'].theta.shape
     model_Earth = MyLogR(np.random.rand(*m))
     model_Mars = MyLogR(np.random.rand(*m))
@@ -258,7 +256,7 @@ if __name__ == "__main__":
     x = df_x.values
     x_train, x_test, y_train, y_test = data_spliter(x, y, 0.8)
 
-    print("\nInformation about splitting:")
+    print("\nInformation about spliting:")
     print(f" x_train shape: {x_train.shape}\n x_test shape: {x_test.shape}\n")
     
     scaler_x = MyStandardScaler()
@@ -283,9 +281,12 @@ if __name__ == "__main__":
     # Calculating the one vs all prediction
     preds_OvA_best = np.argmax(preds, axis=1).reshape(-1, 1)
 
+    # ##################################################### #
+    # Printing the precision, recall and f1 of each One-vs-All
+    # models
+    # ##################################################### #
     print(' ' * 24 + 'prec  |recall | f1' )
     for key, OvA in data_models.items():
-        #print(OvA)
         p_Venus = OvA['Venus'].predict_(x_test_tr)
         p_Earth = OvA['Earth'].predict_(x_test_tr)
         p_Mars = OvA['Mars'].predict_(x_test_tr)
@@ -307,7 +308,6 @@ if __name__ == "__main__":
     # Plotting the resuts (base model from the exploration
     # + the retrained model)
     # ##################################################### #
-    #mse_trained = model._loss_(model.predict_(x_test_tr), y_test_tr)
     
     for ii, model in enumerate((model_Venus, model_Earth, model_Mars, model_AstroBelt)):
         # Prediction and binarization of the probabilities for all the models
@@ -317,7 +317,7 @@ if __name__ == "__main__":
             preds = np.hstack((preds.copy(), model.predict_(x_tr)))
     preds_OvA_best = np.argmax(preds, axis=1).reshape(-1, 1)
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(20, 10))
     ax = plt.axes(projection='3d')
     colors = ["purple", "royalblue", "red", "gold"]
     height = df_x['height'].values.reshape(-1,1)
@@ -327,15 +327,23 @@ if __name__ == "__main__":
     for label in range(4):
         index_y = np.where(np.all(y == label, axis = 1))
     
-        ax.scatter(height[index_y], weight[index_y], bone_density[index_y], facecolors='none', edgecolors=colors[label], s=90, label = f"truth origin {leg[label]}")
+        ax.scatter(height[index_y],
+                   weight[index_y],
+                   bone_density[index_y],
+                   facecolors='none',
+                   edgecolors=colors[label],
+                   s=90, label = f"truth origin {leg[label]}")
         index_hat = np.where(np.all(preds_OvA_best == label, axis = 1))
-        ax.scatter(height[index_hat], weight[index_hat], bone_density[index_hat], color=colors[label], s=80, label = f"predicted origin {leg[label]}")
+        ax.scatter(height[index_hat],
+                   weight[index_hat],
+                   bone_density[index_hat],
+                   color=colors[label],
+                   s=80, label = f"predicted origin {leg[label]}")
     
     ax.set_xlabel('height')
     ax.set_ylabel('weight')
     ax.set_zlabel('bone_density')
-    ax.set_title("Best Model Predictions Vs Truth")
+    ax.set_title("Best Model Predictions Vs Truth: "
+                 + f"f1={f1:.3f} - P={prec:.3f} - R={recall:.3f}")
     ax.legend(loc='center left', bbox_to_anchor=(1.1, 0.5))
-    plt.show()
-
     plt.show()

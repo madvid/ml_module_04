@@ -150,7 +150,7 @@ if __name__ == "__main__":
     preds_Venus = preds_Earth = preds_Mars = preds_AstroBelt = []
     for ii in range(6):
         # Setting learning rate and number of iterations for each models
-        dct_params = {'alpha': 1e-1, 'max_iter': 2000}
+        dct_params = {'alpha': 1e-1, 'max_iter': 10000}
         models_Venus[ii].set_params_(dct_params)
         models_Venus[ii]._tag_ = f'Venus_reg_{ii * 0.2:.2f}'
         models_Earth[ii].set_params_(dct_params)
@@ -333,7 +333,7 @@ if __name__ == "__main__":
     # Plotting of the data and the predictions
     colors = ['#0066ff', '#00cc00', '#ff8c1a', '#ac00e6']
     cmap = mpl.colors.ListedColormap(colors, name='from_list', N=None)
-    fig, axes = plt.subplots(1, 3, figsize=(25, 15))
+    fig, axes = plt.subplots(1, 3, figsize=(15, 15))
     # Fromating of scatter points for the expected and predicted
     kws_expected = {'s': 300,
                     'linewidth': 0.1,
