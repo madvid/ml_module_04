@@ -47,7 +47,6 @@ from scaler import MyStandardScaler
 
 n_cpu = cpu_count()
 cpu_use = int(2 * n_cpu / 3)
-print("CPU USE: ", cpu_use)
 
 lst_check_feat = ["weight", "prod_distance", "time_delivery"]
 lst_dataset = lst_check_feat + ["target"]
@@ -77,7 +76,7 @@ col2idx = {'w': 0,
            'pt2': 22,
            'p2t2': 23}
 
-nb_steps = 1000000
+nb_steps = 10000
 
 # ######################################################### #
 #                  FUNCTION DEFINITIONS                     #
@@ -108,6 +107,7 @@ def loss_report(x: np.array, y: np.array, lst_models: list):
 #                             MAIN                          #
 # ######################################################### #
 if __name__ == "__main__":
+    print("CPU USE: ", cpu_use)
     # Importation of the dataset + basic checking:
     try:
         data = pd.read_csv("space_avocado.csv", index_col=0, dtype=np.float64)
@@ -443,7 +443,7 @@ if __name__ == "__main__":
         dcts_models[model._tag_] = model.__dict__
 
     # Saving the models
-    with open("models.pickle", "wb") as outfile:
+    with open("models_test.pickle", "wb") as outfile:
         pickle.dump(dcts_models, outfile)
 
     fig, axes = plt.subplots(2, 1, figsize=(25, 14))

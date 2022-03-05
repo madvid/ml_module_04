@@ -9,8 +9,14 @@ def show_(my_res, expected_res):
     """ Displays the calculated result and the expected result.
     Convenient for project correction consideration at 42.
     """
-    print("My reg linear gradient:".ljust(25), my_res.reshape(1,-1))
-    print("Expected reg linear grad:".ljust(25), expected_res.reshape(1,-1))
+    if my_res is None:
+        print("My reg linear gradient:".ljust(25), None)
+    else:
+        print("My reg linear gradient:".ljust(25), my_res.reshape(1,-1))
+    if expected_res is None:
+        print("Expected reg linear grad:".ljust(25), None)
+    else:
+        print("Expected reg linear grad:".ljust(25), expected_res.reshape(1,-1))
 
 
 def reg_linear_grad(y, x, theta, lambda_):
@@ -49,6 +55,14 @@ def reg_linear_grad(y, x, theta, lambda_):
             s = "Incompatible shape between the np.array parameters."
             print(s, file=sys.stderr)
             sys.exit()
+        # Checking data type, 'i': signed integer, 'u': unsigned integer,
+        # 'f': float
+        if x.dtype.kind not in ["i", "u", "f"] \
+                or y.dtype.kind not in ["i", "u", "f"] \
+                or theta.dtype.kind not in ["i", "u", "f"]:
+            s = "Unexpected data type for x or y or theta."
+            print(s, file=sys.stderr)
+            return None
         # Checking sign of lambdda_
         if (lambda_ < 0):
             s = "Notice: regularization coefficient is expected to be positive." \

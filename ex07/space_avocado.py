@@ -45,7 +45,7 @@ def retrieve_tags_losses(data_models: dict):
     return lst_tags, lst_losses
 
 
-def expand_poly_cross_term(data: pd.DataFrame):
+def expand_poly_term(data: pd.DataFrame):
     data['w2'] = data['w'] ** 2
     data['w3'] = data['w'] ** 3
     data['w4'] = data['w'] ** 4
@@ -54,6 +54,7 @@ def expand_poly_cross_term(data: pd.DataFrame):
     data['t4'] = data['t'] ** 4
     data['p2'] = data['p'] ** 2
     data['p3'] = data['p'] ** 3
+    data['p4'] = data['p'] ** 4
 
 
 # ######################################################### #
@@ -144,23 +145,38 @@ if __name__ == "__main__":
     # ##################################################### #
     dct_target = find_lowest_loss(data_models)
 
-    model_base = MyRidge(dct_target['thetas'])
-    model_base.set_params_(dct_target)
+    model_best_reg00 = MyRidge(dct_target['thetas'])
+    model_best_reg02 = MyRidge(dct_target['thetas'])
+    model_best_reg04 = MyRidge(dct_target['thetas'])
+    model_best_reg06 = MyRidge(dct_target['thetas'])
+    model_best_reg08 = MyRidge(dct_target['thetas'])
+    model_best_reg10 = MyRidge(dct_target['thetas'])
+    
+    model_best_regs = [model_best_reg00,
+                       model_best_reg02,
+                       model_best_reg04,
+                       model_best_reg06,
+                       model_best_reg08,
+                       model_best_reg10]
+
+    for ii, model_b in enumerate(model_best_regs):
+        model_b.set_params_(dct_target)
+        model_b.set_params_({"lambda_": ii * 0.2})
+    
     # model_base._tag_ = dct_target['_tag_']
     # model_base._vars_ = dct_target['_vars_']
-    print(f"{model_base._vars_ = }",
-          f"-- {model_base._tag_ = }",
-          f"-- {model_base.alpha = }",
-          f"-- {model_base.lambda_ = }")
-
-    m = model_base.thetas.shape
-    model = MyRidge(np.random.rand(*m), alpha=1e-2, max_iter=100000)
+    print(f"{model_best_reg00._vars_ = }",
+          f"-- {model_best_reg00._tag_ = }",
+          f"-- {model_best_reg00.alpha = }",
+          f"-- {model_best_reg00.lambda_ = }")
 
     # ##################################################### #
     # Preparing the data: generating the polynomial features
     # standardization of train and test sets
     # ##################################################### #
-    expand_poly_cross_term(data)
+    expand_poly_term(data)
+    full_model = MyRidge(np.random.rand(data.shape[1], 1), alpha=1e-2, max_iter=100000)
+    
     cols = data.columns.values
     cols = cols[cols != 'target']
     Xs = data_spliter(data[cols].values,
@@ -179,35 +195,66 @@ if __name__ == "__main__":
     Xtr = scaler_x.transform(data[cols].values)
     Ytr = scaler_y.transform(data['target'].values)
 
-    model.fit_(x_train_tr[:, data_idx(dct_target['_vars_'])], y_train_tr)
-    pred_trained = model.predict_(Xtr[:, data_idx(dct_target['_vars_'])])
+    preds_best_regs = {}
+    for model in model_best_regs:
+        model.fit_(x_train_tr[:, data_idx(dct_target['_vars_'])], y_train_tr)
+        preds_best_regs[f'reg{model.lambda_:.2f}'] = model.predict_(x_test_tr[:, data_idx(dct_target['_vars_'])])
+    
+    full_model.fit_(x_train_tr, y_train_tr)
+    #pred_full_trained = full_model.predict_(Xtr)
+    preds_best_regs['full'] = full_model.predict_(x_test_tr)
     # ##################################################### #
     # Plotting the resuts (base model from the exploration
     # + the retrained model)
     # ##################################################### #
-    mse_trained = model._loss_(model.predict_(x_test_tr[:, data_idx(dct_target['_vars_'])]), y_test_tr)
+    mse_best_regs = {}
+    for model in model_best_regs:
+        y_hat = preds_best_regs[f'reg{model.lambda_:.2f}']
+        mse_best_regs[f'reg{model.lambda_:.2f}'] = model.loss_(y_test_tr, y_hat)
+    
+    mse_best_regs['full'] = full_model._loss_( y_test_tr, preds_best_regs['full'])
+
+    print(' ' * 15 + '| MSE')
+    for k, val in mse_best_regs.items():
+        print(f"[{k}]".ljust(15) + '| ' + f"{val:4f}")
 
     fig, axes = plt.subplots(1, 3, figsize=(25, 8))
     # 'weight' aka w is located at col 0
     # 'prod_distance' aka p is located at col 1
     # 'time_deivery' aka t is located at col 2
-    axes[0].scatter(Xtr[:, 0], Ytr, label='ground true', s=4)
-    axes[0].scatter(Xtr[:, 0], pred_trained, label='trained', s=2)
-    axes[0].grid()
-    axes[0].set_xlabel("standardized weight")
+    xlabel_axes = ["standardized weight", "standardized prod_distance", "standardized time_delivery"]
+    for ax_i in range(3):
+        axes[ax_i].scatter(x_test_tr[:, ax_i], y_test_tr, label='ground true', s=32)
+        size = 26
+        for k, pred in preds_best_regs.items():
+            axes[ax_i].scatter(x_test_tr[:, ax_i], pred, label=k, s=size)
+            size -= 3 
+        
+        axes[ax_i].grid()
+        axes[ax_i].set_xlabel(xlabel_axes[ax_i])
+    axes[0].legend()
     axes[0].set_ylabel("standardized target")
 
-    axes[1].scatter(Xtr[:, 1], Ytr, label='ground true', s=4)
-    axes[1].scatter(Xtr[:, 1], pred_trained, label='trained', s=2)
-    axes[1].grid()
-    axes[1].legend()
-    axes[1].set_xlabel("standardized prod_distance")
+    # axes[0].scatter(Xtr[:, 0], Ytr, label='ground true', s=4)
+    # axes[0].scatter(Xtr[:, 0], pred_trained, label='trained', s=2)
+    # axes[0].scatter(Xtr[:, 0], pred_full_trained, label='full model', s=2)
+    # axes[0].grid()
+    # axes[0].set_xlabel("standardized weight")
+    # axes[0].set_ylabel("standardized target")
+# 
+    # axes[1].scatter(Xtr[:, 1], Ytr, label='ground true', s=4)
+    # axes[1].scatter(Xtr[:, 1], pred_trained, label='trained', s=2)
+    # axes[1].scatter(Xtr[:, 1], pred_full_trained, label='full model', s=2)
+    # axes[1].grid()
+    # axes[1].legend()
+    # axes[1].set_xlabel("standardized prod_distance")
+# 
+    # axes[2].scatter(Xtr[:, 2], Ytr, label='ground true', s=4)
+    # axes[2].scatter(Xtr[:, 2], pred_trained, label='trained', s=2)
+    # axes[2].scatter(Xtr[:, 2], pred_full_trained, label='full model', s=2)
+    # axes[2].grid()
+    # axes[2].set_xlabel("standardized time_delivery")
 
-    axes[2].scatter(Xtr[:, 2], Ytr, label='ground true', s=4)
-    axes[2].scatter(Xtr[:, 2], pred_trained, label='trained', s=2)
-    axes[2].grid()
-    axes[2].set_xlabel("standardized time_delivery")
-
-    title = f"MSE score: {mse_trained:.5f}"
-    axes[1].set_title(title)
+    #title = f"MSE score model base: {mse_base:.5f} -- MSE score model full: {mse_full:.5f}"
+    #axes[1].set_title(title)
     plt.show()

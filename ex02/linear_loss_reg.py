@@ -38,7 +38,14 @@ def reg_loss_(y, y_hat, theta, lambda_):
             return None
 
         # Checking the shape of y and y_hat
-        if (y.shape[1] != 1) or (y_hat.shape[1] != 1) or (y_hat.shape[0] != y.shape[0]):
+        if (y.ndim != 2) or (y_hat.ndim != 2):
+            s = (
+                "Dim issue: either y and/or y_hat are not 2 dimensional"
+            )
+            print(s, file=sys.stderr)
+            return None
+        if (y.shape[1] != 1) or (y_hat.shape[1] != 1) \
+                or (y_hat.shape[0] != y.shape[0]):
             s = (
                 "Shape issue: either y and/or y_hat are not 2 dimensional,"
                 + " or not the same number of lines."
@@ -55,6 +62,14 @@ def reg_loss_(y, y_hat, theta, lambda_):
             s = "Numeric type is expected for lambda_ parameter."
             print(s, file=sys.stderr)
             return None
+        # Checking data type, 'i': signed integer, 'u': unsigned integer,
+        # 'f': float
+        if y.dtype.kind not in ["i", "u", "f"] \
+                or y_hat.dtype.kind not in ["i", "u", "f"] \
+                or theta.dtype.kind not in ["i", "u", "f"]:
+            s = "Unexpected data type for y or y_hat or theta."
+            print(s, file=sys.stderr)
+            return None
 
         t_ = np.squeeze(theta[1:])
         loss = (y - y_hat).T @ (y - y_hat)
@@ -68,6 +83,7 @@ def reg_loss_(y, y_hat, theta, lambda_):
 #                                      Main                                  #
 # ########################################################################## #
 if __name__ == "__main__":
+    # Basic tests
     y = np.array([[2], [14], [-13], [5], [12], [4], [-19]])
     y_hat = np.array([[3], [13], [-11.5], [5], [11], [5], [-20]])
     theta = np.array([[1], [2.5], [1.5], [-0.9]])

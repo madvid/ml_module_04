@@ -20,7 +20,8 @@ dct_attr = {'thetas': (np.ndarray),
 #                                Functions                                    #
 # ########################################################################### #
 def check_types(f):
-    """
+    """ Verification og the type of the parameters
+    Decorated function expects to receive 2 numpy arrays.
     """
     def inner(*args):
         _, ag1, ag2 = args
@@ -33,7 +34,15 @@ def check_types(f):
     return inner
 
 def check_measurement(arg1, arg2):
-    """
+    """ Verification of the dimension and shape of the 2 parameters
+    expected to be 2 numpy arrays ()verification with check_types).
+    2 patterns in the method:
+        * (arg1 ; arg2) == ('x' ; 'y')
+            this pattern is for methods receiving x and y parameters as
+            fit_ and gradient_
+        * (arg1 ; arg2) == ('y' ; 'y')
+            this pattern is for methods revceiving y and y_hat parameters
+            as loss_
     """
     def decorator_check_measurement(f):
         """
@@ -160,7 +169,7 @@ class MyRidge(MyLinearRegression):
             reg = self.lambda_ * self.l2()
             return float(0.5 * (loss + reg) / y.shape[0])
         except:
-            None
+            return None
 
     @check_types
     @check_measurement('y', 'y')
@@ -261,3 +270,4 @@ class MyRidge(MyLinearRegression):
 # ########################################################################### #
 if __name__ == "__main__":
     pass
+    # Need to put some basic examples ...

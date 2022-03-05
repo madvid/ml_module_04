@@ -30,9 +30,9 @@ def iterative_l2(theta):
         s = "Unexpected type for theta."
         print(s, file=sys.stderr)
         return None
-    # Checking dim
-    if theta.ndim != 2:
-        s = "Unexpected dimension for theta."
+    # Checking dim and shape
+    if (theta.ndim != 2) or (theta.shape[1] != 1):
+        s = "Unexpected dimension/shape for theta."
         print(s, file=sys.stderr)
         return None
     # Checking data type, 'i': signed integer, 'u': unsigned integer,
@@ -65,9 +65,9 @@ def l2(theta):
         s = "Unexpected type for theta."
         print(s, file=sys.stderr)
         return None
-    # Checking dim
-    if theta.ndim != 2:
-        s = "Unexpected dimension for theta."
+    # Checking dim and shape
+    if (theta.ndim != 2) or (theta.shape[1] != 1):
+        s = "Unexpected dimension/shape for theta."
         print(s, file=sys.stderr)
         return None
     # Checking data type, 'i': signed integer, 'u': unsigned integer,

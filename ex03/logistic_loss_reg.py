@@ -41,7 +41,8 @@ def reg_log_loss_(y, y_hat, theta, lambda_, eps=1e-15):
             return None
 
         # Checking the shape of y and y_hat
-        if (y.shape[1] != 1) or (y_hat.shape[1] != 1) \
+        if (y.ndim != 2) or (y_hat.ndim != 2) \
+                or (y.shape[1] != 1) or (y_hat.shape[1] != 1) \
                 or (y_hat.shape[0] != y.shape[0]):
             s = (
                 "Shape issue: either y and/or y_hat are not 2 dimensional,"
@@ -52,6 +53,14 @@ def reg_log_loss_(y, y_hat, theta, lambda_, eps=1e-15):
         # Checking theta dimension
         if (not isinstance(theta, np.ndarray)) or (theta.ndim != 2):
             s = "2-dimensional array is expected for theta parameter."
+            print(s, file=sys.stderr)
+            return None
+        # Checking data type, 'i': signed integer, 'u': unsigned integer,
+        # 'f': float
+        if y.dtype.kind not in ["i", "u", "f"] \
+                or y_hat.dtype.kind not in ["i", "u", "f"] \
+                or theta.dtype.kind not in ["i", "u", "f"]:
+            s = "Unexpected data type for y or y_hat or theta."
             print(s, file=sys.stderr)
             return None
         # Checking lambda_  parameter
@@ -67,7 +76,7 @@ def reg_log_loss_(y, y_hat, theta, lambda_, eps=1e-15):
         reg = lambda_ * t_ @ t_ / (2 * y.shape[0])
         return -loss / y.shape[0] + reg
     except:
-        None
+        return None
 
 
 # ########################################################################## #

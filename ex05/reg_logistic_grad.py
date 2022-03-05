@@ -14,8 +14,14 @@ def show_(my_res, expected_res):
     """ Displays the calculated result and the expected result.
     Convenient for project correction consideration at 42.
     """
-    print("My reg log gradient:".ljust(25), my_res.reshape(1,-1))
-    print("Expected reg log grad:".ljust(25), expected_res.reshape(1,-1))
+    if my_res is None:
+        print("My reg log gradient:".ljust(25), None)
+    else:
+        print("My reg log gradient:".ljust(25), my_res.reshape(1,-1))
+    if expected_res is None:
+        print("Expected reg log grad:".ljust(25), None)
+    else:
+        print("Expected reg log grad:".ljust(25), expected_res.reshape(1,-1))
 
 
 def reg_logistic_grad(y, x, theta, lambda_):
@@ -35,40 +41,41 @@ def reg_logistic_grad(y, x, theta, lambda_):
     Raises:
         This function should not raise any Exception.
     """
-    # try:
-    # Checking the type of the parameters
-    if (not isinstance(y, np.ndarray)) or (not isinstance(x, np.ndarray)) \
-            or (not isinstance(theta, np.ndarray)) \
-            or (not isinstance(lambda_, (float, int))):
-        s = "Unexpected type for at least one of the method parameters."
-        print(s, file=sys.stderr)
-        sys.exit()
-    # Checking the dimension of the parameters
-    if (y.ndim != 2) or (x.ndim != 2) or (theta.ndim != 2):
-        s = "Unexpected dimension at least for one of the np.array."
-        print(s, file=sys.stderr)
-        sys.exit()
-    # Checking shape compatibility between np.array
-    if (y.shape[0] != x.shape[0]) or (y.shape[1] != 1) \
-            or (x.shape[1] + 1 != theta.shape[0]) or (theta.shape[1] != 1):
-        s = "Incompatible shape between the np.array parameters."
-        print(s, file=sys.stderr)
-        sys.exit()
-    # Checking sign of lambdda_
-    if (lambda_ < 0):
-        s = "Notice: regularization coefficient is expected to be positive." \
-            + " You hopefully know what you are doing."
-        print(s, file=sys.stderr)
-    
-    reg_grad = np.zeros(theta.shape)
-    for y_ii, x_ii in zip(y, x):
-        pred_ = sigmoid_(np.dot(x_ii, theta[1:]) + theta[0])
-        reg_grad[0] += pred_ - y_ii
-        reg_grad[1:] += (x_ii * (pred_ - y_ii)).reshape(-1, 1)
-    reg_grad[1:] += lambda_ * theta[1:]
-    return (reg_grad) / y.shape[0]
-    # except:
-    #     return None
+    try:
+        # Checking the type of the parameters
+        if (not isinstance(y, np.ndarray)) or (not isinstance(x, np.ndarray)) \
+                or (not isinstance(theta, np.ndarray)) \
+                or (not isinstance(lambda_, (float, int))):
+            s = "Unexpected type for at least one of the method parameters."
+            print(s, file=sys.stderr)
+            return None
+        # Checking the dimension of the parameters
+        if (y.ndim != 2) or (x.ndim != 2) or (theta.ndim != 2):
+            s = "Unexpected dimension at least for one of the np.array."
+            print(s, file=sys.stderr)
+            return None
+        # Checking shape compatibility between np.array
+        if (y.shape[0] != x.shape[0]) or (y.shape[1] != 1) \
+                or (x.shape[1] + 1 != theta.shape[0]) or (theta.shape[1] != 1):
+            s = "Incompatible shape between the np.array parameters."
+            print(s, file=sys.stderr)
+            return None
+        # Checking sign of lambdda_
+        if (lambda_ < 0):
+            s = "Notice: regularization coefficient is expected to be positive." \
+                + " You hopefully know what you are doing."
+            print(s, file=sys.stderr)
+            return None
+        
+        reg_grad = np.zeros(theta.shape)
+        for y_ii, x_ii in zip(y, x):
+            pred_ = sigmoid_(np.dot(x_ii, theta[1:]) + theta[0])
+            reg_grad[0] += pred_ - y_ii
+            reg_grad[1:] += (x_ii * (pred_ - y_ii)).reshape(-1, 1)
+        reg_grad[1:] += lambda_ * theta[1:]
+        return (reg_grad) / y.shape[0]
+    except:
+        return None
 
 
 def vec_reg_logistic_grad(y, x, theta, lambda_):

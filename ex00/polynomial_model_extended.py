@@ -38,7 +38,7 @@ def add_polynomial_features(x, power):
             print(s, file=sys.stderr)
             return None
         # Checking type of power
-        if (not isinstance(power, int)) and (power < 0):
+        if (not isinstance(power, int)) or (power <= 0):
             s = "Unexpected type or value for power."
             print(s, file=sys.stderr)
             return None
@@ -50,7 +50,7 @@ def add_polynomial_features(x, power):
         for ii in range(x_.shape[1]):
             lst_vander.append(polyvander(x_[:, ii], power))
         res = x_
-        for ii in range(x.shape[1], power + x.shape[1]):
+        for ii in range(2, power + x_.shape[1]):
             for jj in range(len(lst_vander)):
                 res = np.hstack((res, lst_vander[jj][:, ii : ii + 1]))
         return res.astype(x.dtype)
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     print("expected_res:\n", expected_res)
 
     print("\n# Example 2:")
-    my_res = add_polynomial_features(x, 5)
+    my_res = add_polynomial_features(x, 4)
     expected_res = np.array(
         [
             [1, 2, 1, 4, 1, 8, 1, 16],
