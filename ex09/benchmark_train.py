@@ -146,7 +146,7 @@ if __name__ == "__main__":
     thetas_AstroBelt = np.random.rand(x.shape[1] + 1, 1)
     models_AstroBelt = [MyLogR(thetas_AstroBelt, lambda_=l_ii * 0.2) for l_ii in range(6)]
 
-    # Preparation of the lists for the prediction of the models afeter training
+    # Preparation of the lists for the prediction of the models after training
     preds_Venus = preds_Earth = preds_Mars = preds_AstroBelt = []
     for ii in range(6):
         # Setting learning rate and number of iterations for each models
